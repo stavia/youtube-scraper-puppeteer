@@ -3,8 +3,6 @@ module.exports = {
   channel: channel
 };
 
-const sleep = (delay) => new Promise((resolve) => setTimeout(resolve, delay))
-
 async function search(browser, query) {
   const page = await browser.newPage();
   await page.goto('https://www.youtube.com/results?search_query=' + encodeURI(query));
@@ -85,10 +83,39 @@ async function channel(browser, url) {
   }
   let videoData = await page.$$eval('a#video-title', (titleLinkEls) => {
     return titleLinkEls.map((titleLinkEl) => {
+      let label = titleLinkEl.getAttribute('aria-label')
+      let regex = /\s(\S*)\sviews/mg;
+      let result = regex.exec(label)
+      let views = null
+      let years = null
+      let minutes = null
+      let seconds = null
+      if (result && result.length > 1) {
+        views = result[1].replace(/\,/g, '')
+      }
+      regex = /\s(\S*)\syear/mg;
+      result = regex.exec(label)
+      if (result && result.length > 1) {
+        years = result[1]
+      }
+      regex = /\s(\S*)\sminute/mg;
+      result = regex.exec(label)
+      if (result && result.length > 1) {
+        minutes = result[1]
+      }
+      regex = /\s(\S*)\ssecond/mg;
+      result = regex.exec(label)
+      if (result && result.length > 1) {
+        seconds = result[1]
+      }
       return {
         ariaLabel: titleLinkEl.getAttribute('aria-label'),
         title: titleLinkEl.getAttribute('title'),
-        link: 'https://youtube.com' + titleLinkEl.getAttribute('href')
+        link: 'https://youtube.com' + titleLinkEl.getAttribute('href'),
+        views: views,
+        years: years,
+        minutes: minutes,
+        seconds: seconds,
       };
     });
   });
